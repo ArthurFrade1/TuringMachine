@@ -76,7 +76,7 @@ public class App {
 
         try {
             //Lë arquivo
-            String filePath = "src/main/java/com/arthur/project/test.json";
+            String filePath = "src/main/java/com/arthur/project/mt.json";
             String jsonString = new String(Files.readAllBytes(Paths.get(filePath)));
 
             JSONObject jsonObject = new JSONObject(jsonString);

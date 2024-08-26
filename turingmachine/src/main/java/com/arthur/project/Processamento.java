@@ -2,10 +2,9 @@ package com.arthur.project;
 import java.util.ArrayList;
 public class Processamento {
     private ArrayList<Estado> Estados;
-    private String palavra="aaabb";
-    private ArrayList<String> fita = new ArrayList<>();
+    private String palavra="0";
+    
 
-    private int indexFita=1; //Sempre começa no segundo simbolo
 
     private boolean houveTransicao;
     // private Estado estadoAtual;
@@ -15,7 +14,7 @@ public class Processamento {
         processa();
     }
 
-    public void preencheFita(){
+    public void preencheFita(ArrayList<String> fita){
         fita.add("[");
         for(int i=0; i<palavra.length(); i++){
             fita.add(String.valueOf(palavra.charAt(i)));
@@ -34,66 +33,78 @@ public class Processamento {
         return null;
     }
 
-    public Estado transiciona(Estado estadoAtual){
-        //Procurar na lista de transições do estado algum "le" que seja igual ao simboloAtual
-        ArrayList<Transicao> transicoes = estadoAtual.getTransicoes(); //Pego suas transições
+    public boolean possiveisTransicoes(Estado estadoAtual, ArrayList<String> fita, int indexFita){
+        ArrayList<Transicao> transicoes= estadoAtual.getTransicoes();
 
         String simboloAtual=fita.get(indexFita);
 
-        houveTransicao=false; //seto como falso
-        for (Transicao transicao: transicoes){ //Pego uma por uma
-            if(transicao.getLe().equals(simboloAtual)){ //Achou um transicao que le o simbolo
+        boolean achou=false;
+        for (Transicao transicao : transicoes) {
+            if(transicao.getLe().equals(simboloAtual)){//Achou um transicao que le o simbolo
 
-                //Se exsite pelo menos uma transação compativel
-                houveTransicao=true;
-
-                String escreve = transicao.getEscreve();
-                fita.set(indexFita, escreve);
+                System.out.println("ESTAMOS NO ESTADO: "+estadoAtual.getNome());
+                printaFita(fita);
+                estadoAtual= transiciona(estadoAtual, transicao, fita, indexFita);
 
                 //Anda na fita
                 String direcao = transicao.getDirecao();
                 if(direcao.equals(">")) indexFita++;
                 if(direcao.equals("<")) indexFita--;
 
-                //  -----------------  SOMENTE PARA O CASO SENDO DETERMINISTIICO
-                //Procura estado pra onde vai
-                String nomeEstado= transicao.getNomeEstado();
-                for (Estado estado : Estados) {
-                    if(estado.getNome().equals(nomeEstado)){
-                        return estado;
-                    }
+                boolean resp=possiveisTransicoes(estadoAtual, fita, indexFita);
+                if(!resp){
+                    if(direcao.equals(">")) indexFita--;
+                    if(direcao.equals("<")) indexFita++;
                 }
-                
+
+                achou = achou || resp;
             }
         }
+        //O estado rodou todas as recursões possiveis
+        //Verificar se parou no estado final
+        if(estadoAtual.getIsFinal()) return true;
+        else return achou;
+    }
+
+    public Estado transiciona(Estado estadoAtual, Transicao transicao, ArrayList<String> fita, int indexFita){
+ 
+        String escreve = transicao.getEscreve();
+        fita.set(indexFita, escreve);
+
+        //  -----------------  SOMENTE PARA O CASO SENDO DETERMINISTIICO
+        //Procura estado pra onde vai
+        String nomeEstado= transicao.getNomeEstado();
+        for (Estado estado : Estados) {
+            if(estado.getNome().equals(nomeEstado)){
+                return estado;
+            }
+        }
+        
+        
         return estadoAtual;
     }
 
     public void processa(){
-        preencheFita();
-        printaFita();
+        ArrayList<String> fita = new ArrayList<>();
+        preencheFita(fita);
+        printaFita(fita);
         //Começamos pelo estado inicial
         Estado estadoAtual = achaEstadoInicial();
 
-        //Roda até estar no estado final
-        do{ //Se for o estado final e a maquina parar, para a execução
-            System.out.println("Entrou");   
 
-            System.out.println("ESTAMOS NO ESTADO: "+estadoAtual.getNome());
-            estadoAtual= transiciona(estadoAtual);
+        boolean resp=possiveisTransicoes(estadoAtual, fita, 1);
 
-            printaFita();
-        }while(houveTransicao); //Vai parar somente se não houver mais transição pra onde ir
-
-        if(estadoAtual.getIsFinal()) System.out.println("Sim");
+        if(resp) System.out.println("Sim");
         else System.out.println("Não");
 
     }
 
-    public void printaFita(){
+    public void printaFita(ArrayList<String> fita){
         for(int i=0; i<10; i++){
             System.out.println(fita.get(i));
         }
     }
 
+    
 }
+
